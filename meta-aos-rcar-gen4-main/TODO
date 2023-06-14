@@ -1,7 +1,0 @@
-* CM sometimes can't be properly stopped on reboot: "stop job is running for AOS Communication Manager (26s / 1min 30s)"
-
-* UM doesn't handle properly uboot.env file. It doesn't like 0x00 at the end. As WA fixed size is written in uboot (0x3E):
-    ```
-    setenv aos_save_vars 'env export -t ${loadaddr} aos_boot_main aos_boot_part aos_boot1_ok aos_boot2_ok; fatwrite mmc 0:3 ${loadaddr} uboot.env 0x3E'
-    ```
-
