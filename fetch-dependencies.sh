@@ -55,6 +55,12 @@ git -c advice.detachedHead=false -C meta-rcar checkout 810e5439d8282e653d89da937
 echo Cloning poky into poky
 git clone https://git.yoctoproject.org/git/poky poky
 git -c advice.detachedHead=false -C poky checkout 4ddc26f4e4c71b6981898687e2c2e9ce587d15b3
+# echo Cloning meta-ewaol-machine into meta-ewaol-machine
+# git clone https://gitlab.com/soafee/ewaol/meta-ewaol-machine meta-ewaol-machine
+# git -c advice.detachedHead=false -C meta-ewaol-machine checkout 96f6d1769a8a9d0ad20cb605ea7eb37e508029e9
+# echo Cloning meta-ewaol into meta-ewaol
+# git clone https://gitlab.arm.com/ewaol/meta-ewaol meta-ewaol
+# git -c advice.detachedHead=false -C meta-ewaol checkout 26b2d08f70dcc0e046da8544c968064773c7cc45
 
 echo Complete
 
