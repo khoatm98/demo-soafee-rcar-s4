@@ -1,2 +1,3 @@
-# demo-soafee-rcar-s4
-This repo is to implement soafee to Renesas MCU RCAR S4
+# aos-core-rcar-gen4
+
+This repo contains Aos core plugins for https://github.com/aoscloud/meta-aos-rcar-gen4 product.
