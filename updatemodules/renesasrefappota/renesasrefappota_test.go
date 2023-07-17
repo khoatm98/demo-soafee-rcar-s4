@@ -1,4 +1,4 @@
-package renesasota_test
+package renesasrefappota_test
 
 import (
 	"bytes"
@@ -18,7 +18,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/syucream/posix_mq"
 
-	"github.com/aoscloud/aos-core-rcar-gen4/updatemodules/renesasota"
+	"github.com/khoatm98/demo-soafee-rcar-s4/updatemodules/renesasrefappota"
 )
 
 /***********************************************************************************************************************
