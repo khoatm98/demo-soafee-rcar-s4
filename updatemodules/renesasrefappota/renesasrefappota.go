@@ -154,10 +154,6 @@ func (module *RenesasUpdateModule) Prepare(imagePath string, vendorVersion strin
 		return aoserrors.Wrap(err)
 	}
 
-	if err := module.sendOTACommands(otaCommandSyncCompose, otaCommandDownload); err != nil {
-		return err
-	}
-
 	module.PendingVersion = vendorVersion
 
 	if err := module.setState(preparedState); err != nil {
