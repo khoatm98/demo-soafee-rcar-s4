@@ -1,4 +1,4 @@
-package renesasota
+package renesasrefappota
 
 import (
 	"bytes"

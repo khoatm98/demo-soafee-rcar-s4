@@ -1,4 +1,4 @@
-module github.com/aoscloud/aos-core-rcar-gen4
+module github.com/khoatm98/demo-soafee-rcar-s4
 
 go 1.18
 

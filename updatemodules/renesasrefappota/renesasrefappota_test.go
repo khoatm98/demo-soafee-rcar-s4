@@ -104,7 +104,7 @@ func TestUpdate(t *testing.T) {
 
 	targetFile := filepath.Join(tmpDir, "target.dat")
 
-	module, err := renesasota.New("test", moduleConfig(targetFile), &testStateStorage{})
+	module, err := renesasrefappota.New("test", moduleConfig(targetFile), &testStateStorage{})
 	if err != nil {
 		t.Fatalf("Can't create test module: %v", err)
 	}
@@ -195,7 +195,7 @@ func TestRevert(t *testing.T) {
 	}
 	defer master.close()
 
-	module, err := renesasota.New(
+	module, err := renesasrefappota.New(
 		"test", moduleConfig(filepath.Join(tmpDir, "target.dat")), &testStateStorage{})
 	if err != nil {
 		t.Fatalf("Can't create test module: %v", err)
