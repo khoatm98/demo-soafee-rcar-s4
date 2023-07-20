@@ -211,7 +211,7 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 	if module.State == idleState {
 		return false, nil
 	}
-	log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
+	log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
 	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
 		return false, nil
 	}
