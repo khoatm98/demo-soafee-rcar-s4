@@ -154,7 +154,11 @@ func (module *RenesasUpdateModule) Prepare(imagePath string, vendorVersion strin
 	}
 
 	module.PendingVersion = vendorVersion
-
+	//Create flag for updating request
+	log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
+	if err := os.MkdirAll("updateFlag", 0o700); err != nil {
+		return aoserrors.Wrap(err)
+	}
 	if err := module.setState(preparedState); err != nil {
 		return err
 	}
@@ -169,20 +173,20 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
 	if module.State == updatedState {
 		return false, nil
 	}
-	//Create flag for updating request
-	log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
-	if err := os.MkdirAll("updateFlag", 0o700); err != nil {
-		return false, err
+	
+	log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
+	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
+		log.WithFields(log.Fields{"id": module.id}).Debug("Existed update flag")
+		return false, nil
 	}
-
 	
 	module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
-
+	log.WithFields(log.Fields{"id": module.id}).Debug("Done updating")
 	if err := module.setState(updatedState); err != nil {
 		return false, err
 	}
 
-	return false, nil
+	return true, nil
 }
 
 // Revert reverts update.
@@ -211,10 +215,7 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 	if module.State == idleState {
 		return false, nil
 	}
-	log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
-	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
-		return false, nil
-	}
+	
 	if err := module.setState(idleState); err != nil {
 		return false, err
 	}
