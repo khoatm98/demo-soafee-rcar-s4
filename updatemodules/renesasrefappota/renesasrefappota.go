@@ -164,7 +164,7 @@ func (module *RenesasUpdateModule) Prepare(imagePath string, vendorVersion strin
 
 // Update updates module.
 func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Update renesasupdate module")
+	log.WithFields(log.Fields{"id": module.id}).Debug("Update renesas update module")
 
 	if module.State == updatedState {
 		return false, nil
@@ -206,7 +206,7 @@ func (module *RenesasUpdateModule) Revert() (rebootRequired bool, err error) {
 
 // Apply applies update.
 func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Apply renesasupdate module")
+	log.WithFields(log.Fields{"id": module.id}).Debug("Apply renesas update module")
 	
 	if module.State == idleState {
 		return false, nil
@@ -224,7 +224,7 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 
 // Reboot performs module reboot.
 func (module *RenesasUpdateModule) Reboot() error {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Reboot renesasupdate module")
+	log.WithFields(log.Fields{"id": module.id}).Debug("Reboot renesas update module")
 
 	return aoserrors.New("not supported")
 }
