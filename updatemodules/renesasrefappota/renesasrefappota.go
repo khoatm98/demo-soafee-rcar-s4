@@ -170,7 +170,12 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
 	if module.State == updatedState {
 		return false, nil
 	}
+	//Create flag for updating request
+	if err = os.MkdirAll("~/update", 0o755); err != nil {
+		return nil, aoserrors.Wrap(err)
+	}
 
+	
 	module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
 
 	if err := module.setState(updatedState); err != nil {
@@ -202,11 +207,13 @@ func (module *RenesasUpdateModule) Revert() (rebootRequired bool, err error) {
 // Apply applies update.
 func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 	log.WithFields(log.Fields{"id": module.id}).Debug("Apply renesasupdate module")
-
+	
 	if module.State == idleState {
 		return false, nil
 	}
-
+	if _, err := os.Stat("~/update"); !os.IsNotExist(err) {
+		return false, nil
+	}
 	if err := module.setState(idleState); err != nil {
 		return false, err
 	}
@@ -216,9 +223,15 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 
 // Reboot performs module reboot.
 func (module *RenesasUpdateModule) Reboot() error {
-	log.WithFields(log.Fields{"id": module.id}).Debugf("Reboot renesasupdate module")
+	if module.rebooter != nil {
+		log.WithFields(log.Fields{"id": module.id}).Debug("Reboot module")
 
-	return aoserrors.New("not supported")
+		if err = module.rebooter.Reboot(); err != nil {
+			return aoserrors.Wrap(err)
+		}
+	}
+
+	return nil
 }
 
 func (state updateState) String() string {
@@ -241,53 +254,6 @@ func (module *RenesasUpdateModule) setState(state updateState) error {
 
 	if err = module.storage.SetModuleState(module.id, data); err != nil {
 		return aoserrors.Wrap(err)
-	}
-
-	return nil
-}
-
-func (module *RenesasUpdateModule) sendOTACommands(commands ...int64) error {
-	sendMQ, err := posix_mq.NewMessageQueue(
-		module.config.SendQueueName, posix_mq.O_WRONLY, 0o600, nil)
-	if err != nil {
-		return aoserrors.Wrap(err)
-	}
-	defer sendMQ.Close()
-
-	recvMQ, err := posix_mq.NewMessageQueue(
-		module.config.ReceiveQueueName, posix_mq.O_RDONLY, 0o600, nil)
-	if err != nil {
-		return aoserrors.Wrap(err)
-	}
-	defer recvMQ.Close()
-
-	for _, command := range commands {
-		buffer := bytes.NewBuffer(nil)
-
-		if err = binary.Write(buffer, binary.LittleEndian, command); err != nil {
-			return aoserrors.Wrap(err)
-		}
-
-		if err = sendMQ.TimedSend(buffer.Bytes(), 0, time.Now().Add(module.config.Timeout.Duration)); err != nil {
-			return aoserrors.Wrap(err)
-		}
-
-		recvData, _, err := recvMQ.TimedReceive(time.Now().Add(module.config.Timeout.Duration))
-		if err != nil {
-			return aoserrors.Wrap(err)
-		}
-
-		buffer = bytes.NewBuffer(recvData)
-
-		var status int64
-
-		if err = binary.Read(buffer, binary.LittleEndian, &status); err != nil {
-			return aoserrors.Wrap(err)
-		}
-
-		if status != otaStatusSuccess {
-			return aoserrors.Errorf("execute command %d failed", command)
-		}
 	}
 
 	return nil
