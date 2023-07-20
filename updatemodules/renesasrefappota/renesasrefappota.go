@@ -218,7 +218,7 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 		return false, err
 	}
 
-	return false, nil
+	return true, nil
 }
 
 // Reboot performs module reboot.
