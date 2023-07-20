@@ -170,7 +170,8 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
 		return false, nil
 	}
 	//Create flag for updating request
-	if err = os.MkdirAll("~/update", 0o755); err != nil {
+	log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
+	if err := os.MkdirAll("updateFlag", 0o700); err != nil {
 		return false, err
 	}
 
@@ -210,7 +211,8 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 	if module.State == idleState {
 		return false, nil
 	}
-	if _, err := os.Stat("~/update"); !os.IsNotExist(err) {
+	log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
+	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
 		return false, nil
 	}
 	if err := module.setState(idleState); err != nil {
