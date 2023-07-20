@@ -1,8 +1,7 @@
 package renesasrefappota
 
 import (
-	"bytes"
-	"encoding/binary"
+
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -13,7 +12,7 @@ import (
 	"github.com/aoscloud/aos_common/image"
 	"github.com/aoscloud/aos_updatemanager/updatehandler"
 	log "github.com/sirupsen/logrus"
-	"github.com/syucream/posix_mq"
+
 )
 
 /***********************************************************************************************************************
@@ -172,7 +171,7 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
 	}
 	//Create flag for updating request
 	if err = os.MkdirAll("~/update", 0o755); err != nil {
-		return nil, aoserrors.Wrap(err)
+		return false, err
 	}
 
 	
@@ -223,15 +222,9 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 
 // Reboot performs module reboot.
 func (module *RenesasUpdateModule) Reboot() error {
-	if module.rebooter != nil {
-		log.WithFields(log.Fields{"id": module.id}).Debug("Reboot module")
+	log.WithFields(log.Fields{"id": module.id}).Debugf("Reboot renesasupdate module")
 
-		if err = module.rebooter.Reboot(); err != nil {
-			return aoserrors.Wrap(err)
-		}
-	}
-
-	return nil
+	return aoserrors.New("not supported")
 }
 
 func (state updateState) String() string {
