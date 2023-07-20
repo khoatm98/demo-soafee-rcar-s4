@@ -211,7 +211,7 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 	if module.State == idleState {
 		return false, nil
 	}
-	log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
+	log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
 	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
 		return false, nil
 	}
@@ -224,7 +224,7 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 
 // Reboot performs module reboot.
 func (module *RenesasUpdateModule) Reboot() error {
-	log.WithFields(log.Fields{"id": module.id}).Debugf("Reboot renesasupdate module")
+	log.WithFields(log.Fields{"id": module.id}).Debug("Reboot renesasupdate module")
 
 	return aoserrors.New("not supported")
 }
