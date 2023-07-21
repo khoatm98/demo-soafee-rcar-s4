@@ -106,7 +106,8 @@ func New(id string, config json.RawMessage, storage updatehandler.ModuleStorage,
    		 return nil, aoserrors.Wrap(err)
    	 }
     }
-
+	module.VendorVersion = "0.0.1"
+	module.PendingVersion = "0.0.1"
     return module, nil
 }
 
@@ -160,14 +161,24 @@ func (module *RenesasUpdateModule) Prepare(imagePath string, vendorVersion strin
 
     module.PendingVersion = vendorVersion
     //Create flag for updating request
-    log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
-    if err := os.MkdirAll("updateFlag", 0o700); err != nil {
+    log.WithFields(log.Fields{"id": module.id}).Debug("Make dowload done flag")
+    if err := os.MkdirAll("downloadedFlag", 0o700); err != nil {
    	 return aoserrors.Wrap(err)
     }
     if err := module.setState(preparedState); err != nil {
    	 return err
     }
-
+	log.WithFields(log.Fields{"id": module.id}).Debug("Waiting for updates ...")
+	for {
+		// condition to terminate the loop
+		if _, err := os.Stat("downloadedFlag"); os.IsNotExist(err) {
+			log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
+			if err := os.MkdirAll("updateFlag", 0o700); err != nil {
+				return aoserrors.Wrap(err)
+			}
+			break
+		}
+	}
     return nil
 }
 
@@ -179,12 +190,18 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
    	 return false, nil
     }
     
-    log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
-    if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
-		log.WithFields(log.Fields{"id": module.id}).Debug("Existed update flag")
-		return false, aoserrors.New("On updating process...")
-    }
-    
+    log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag ...")
+	if _, err := os.Stat("updateFlag"); os.IsNotExist(err) {
+		log.WithFields(log.Fields{"id": module.id}).Debug("On updating process...")
+	}
+
+	for {
+		// condition to terminate the loop
+		if _, err := os.Stat("updateFlag"); os.IsNotExist(err) {
+			break
+		}
+	}
+	
     module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
     log.WithFields(log.Fields{"id": module.id}).Debug("Done updating")
     if err := module.setState(updatedState); err != nil {
@@ -196,7 +213,7 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
 
 // Revert reverts update.
 func (module *RenesasUpdateModule) Revert() (rebootRequired bool, err error) {
-    log.WithFields(log.Fields{"id": module.id}).Debug("Revert renesasupdate module")
+    log.WithFields(log.Fields{"id": module.id}).Debug("Revert renesas update module")
 
     if module.State == idleState {
    	 return false, nil
