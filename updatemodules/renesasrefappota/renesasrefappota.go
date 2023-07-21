@@ -206,7 +206,7 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
    	 return false, err
     }
 
-    return true, nil
+    return false, nil
 }
 
 // Revert reverts update.
@@ -225,7 +225,7 @@ func (module *RenesasUpdateModule) Revert() (rebootRequired bool, err error) {
    	 return false, err
     }
 
-    return rebootRequired, nil
+    return true, nil
 }
 
 // Apply applies update.
