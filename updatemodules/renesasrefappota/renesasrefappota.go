@@ -2,16 +2,16 @@ package renesasrefappota
 
 import (
 
-	"encoding/json"
-	"os"
-	"path/filepath"
-	"time"
+    "encoding/json"
+    "os"
+    "path/filepath"
+    "time"
 
-	"github.com/aoscloud/aos_common/aoserrors"
-	"github.com/aoscloud/aos_common/aostypes"
-	"github.com/aoscloud/aos_common/image"
-	"github.com/aoscloud/aos_updatemanager/updatehandler"
-	log "github.com/sirupsen/logrus"
+    "github.com/aoscloud/aos_common/aoserrors"
+    "github.com/aoscloud/aos_common/aostypes"
+    "github.com/aoscloud/aos_common/image"
+    "github.com/aoscloud/aos_updatemanager/updatehandler"
+    log "github.com/sirupsen/logrus"
 
 )
 
@@ -20,24 +20,24 @@ import (
  **********************************************************************************************************************/
 
 const (
-	otaCommandSyncCompose = 0
-	otaCommandDownload    = 1
-	otaCommandInstall     = 2
-	otaCommandActivate    = 3
-	otaCommandRevert      = 4
+    otaCommandSyncCompose = 0
+    otaCommandDownload	= 1
+    otaCommandInstall 	= 2
+    otaCommandActivate	= 3
+    otaCommandRevert  	= 4
 )
 
 const (
-	otaStatusSuccess = 0
-	otaStatusFailed  = 1
+    otaStatusSuccess = 0
+    otaStatusFailed  = 1
 )
 
 const otaDefaultTimeout = 10 * time.Minute
 
 const (
-	idleState = iota
-	preparedState
-	updatedState
+    idleState = iota
+    preparedState
+    updatedState
 )
 
 /***********************************************************************************************************************
@@ -46,23 +46,25 @@ const (
 
 // RenesasUpdateModule update components using Renesas OTA master.
 type RenesasUpdateModule struct {
-	id             string
-	config         moduleConfig
-	storage        updatehandler.ModuleStorage
-	State          updateState `json:"state"`
-	VendorVersion  string      `json:"vendorVersion"`
-	PendingVersion string      `json:"pendingVersion"`
-	rebooter       Rebooter
-	checker        UpdateChecker
+    id         	string
+    config     	moduleConfig
+    storage    	updatehandler.ModuleStorage
+    State      	updateState `json:"state"`
+    VendorVersion  string  	`json:"vendorVersion"`
+    PendingVersion string  	`json:"pendingVersion"`
+    rebooter   	Rebooter
 }
 
 type moduleConfig struct {
-	SendQueueName    string            `json:"sendQueueName"`
-	ReceiveQueueName string            `json:"receiveQueueName"`
-	TargetFile       string            `json:"targetFile"`
-	Timeout          aostypes.Duration `json:"timeout"`
+    SendQueueName	string        	`json:"sendQueueName"`
+    ReceiveQueueName string        	`json:"receiveQueueName"`
+    TargetFile   	string        	`json:"targetFile"`
+    Timeout      	aostypes.Duration `json:"timeout"`
 }
 
+type Rebooter interface {
+    Reboot() (err error)
+}
 type updateState int
 
 /***********************************************************************************************************************
@@ -70,178 +72,177 @@ type updateState int
  **********************************************************************************************************************/
 
 // New creates fs update module instance.
-func New(id string, config json.RawMessage, storage updatehandler.ModuleStorage, rebooter Rebooter,
-	checker UpdateChecker) (updatehandler.UpdateModule, error) {
-	log.WithField("module", id).Debug("Create renesasupdate module")
+func New(id string, config json.RawMessage, storage updatehandler.ModuleStorage, rebooter Rebooter) (updatehandler.UpdateModule, error) {
+    log.WithField("module", id).Debug("Create renesasupdate module")
 
-	module := &RenesasUpdateModule{
-		id:      id,
-		storage: storage,
-		rebooter: rebooter, checker: checker,
-		config: moduleConfig{
-			Timeout: aostypes.Duration{Duration: otaDefaultTimeout},
-		},
-	}
+    module := &RenesasUpdateModule{
+   	 id:  	id,
+   	 storage: storage,
+   	 rebooter: rebooter,
+   	 config: moduleConfig{
+   		 Timeout: aostypes.Duration{Duration: otaDefaultTimeout},
+   	 },
+    }
 
-	if err := json.Unmarshal(config, &module.config); err != nil {
-		return nil, aoserrors.Wrap(err)
-	}
+    if err := json.Unmarshal(config, &module.config); err != nil {
+   	 return nil, aoserrors.Wrap(err)
+    }
 
-	if module.config.ReceiveQueueName == "" || module.config.SendQueueName == "" {
-		return nil, aoserrors.New("receive and send message queue should be configured")
-	}
+    if module.config.ReceiveQueueName == "" || module.config.SendQueueName == "" {
+   	 return nil, aoserrors.New("receive and send message queue should be configured")
+    }
 
-	if module.config.TargetFile == "" {
-		return nil, aoserrors.New("target file name should be configured")
-	}
+    if module.config.TargetFile == "" {
+   	 return nil, aoserrors.New("target file name should be configured")
+    }
 
-	state, err := storage.GetModuleState(id)
-	if err != nil {
-		return nil, aoserrors.Wrap(err)
-	}
+    state, err := storage.GetModuleState(id)
+    if err != nil {
+   	 return nil, aoserrors.Wrap(err)
+    }
 
-	if len(state) > 0 {
-		if err := json.Unmarshal(state, module); err != nil {
-			return nil, aoserrors.Wrap(err)
-		}
-	}
+    if len(state) > 0 {
+   	 if err := json.Unmarshal(state, module); err != nil {
+   		 return nil, aoserrors.Wrap(err)
+   	 }
+    }
 
-	return module, nil
+    return module, nil
 }
 
 // Close closes DualPartModule.
 func (module *RenesasUpdateModule) Close() error {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Close renesasupdate module")
+    log.WithFields(log.Fields{"id": module.id}).Debug("Close renesasupdate module")
 
-	return nil
+    return nil
 }
 
 // GetID returns module ID.
 func (module *RenesasUpdateModule) GetID() string {
-	return module.id
+    return module.id
 }
 
 // Init initializes module.
 func (module *RenesasUpdateModule) Init() error {
-	return nil
+    return nil
 }
 
 // GetVendorVersion returns vendor version.
 func (module *RenesasUpdateModule) GetVendorVersion() (string, error) {
-	return module.VendorVersion, nil
+    return module.VendorVersion, nil
 }
 
 // Prepare preparing image.
 func (module *RenesasUpdateModule) Prepare(imagePath string, vendorVersion string, annotations json.RawMessage) error {
-	log.WithFields(log.Fields{
-		"id":            module.id,
-		"imagePath":     imagePath,
-		"vendorVersion": vendorVersion,
-	}).Debug("Prepare renesasupdate module")
+    log.WithFields(log.Fields{
+   	 "id":        	module.id,
+   	 "imagePath": 	imagePath,
+   	 "vendorVersion": vendorVersion,
+    }).Debug("Prepare renesasupdate module")
 
-	if module.State == preparedState {
-		return nil
-	}
+    if module.State == preparedState {
+   	 return nil
+    }
 
-	if err := os.MkdirAll(filepath.Dir(module.config.TargetFile), 0o700); err != nil {
-		return aoserrors.Wrap(err)
-	}
+    if err := os.MkdirAll(filepath.Dir(module.config.TargetFile), 0o700); err != nil {
+   	 return aoserrors.Wrap(err)
+    }
 
-	file, err := os.Create(module.config.TargetFile)
-	if err != nil {
-		return aoserrors.Wrap(err)
-	}
-	file.Close()
+    file, err := os.Create(module.config.TargetFile)
+    if err != nil {
+   	 return aoserrors.Wrap(err)
+    }
+    file.Close()
 
-	if _, err := image.CopyFromGzipArchive(module.config.TargetFile, imagePath); err != nil {
-		return aoserrors.Wrap(err)
-	}
+    if _, err := image.CopyFromGzipArchive(module.config.TargetFile, imagePath); err != nil {
+   	 return aoserrors.Wrap(err)
+    }
 
-	module.PendingVersion = vendorVersion
-	//Create flag for updating request
-	log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
-	if err := os.MkdirAll("updateFlag", 0o700); err != nil {
-		return aoserrors.Wrap(err)
-	}
-	if err := module.setState(preparedState); err != nil {
-		return err
-	}
+    module.PendingVersion = vendorVersion
+    //Create flag for updating request
+    log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
+    if err := os.MkdirAll("updateFlag", 0o700); err != nil {
+   	 return aoserrors.Wrap(err)
+    }
+    if err := module.setState(preparedState); err != nil {
+   	 return err
+    }
 
-	return nil
+    return nil
 }
 
 // Update updates module.
 func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Update renesas update module")
+    log.WithFields(log.Fields{"id": module.id}).Debug("Update renesas update module")
 
-	if module.State == updatedState {
-		return false, nil
-	}
-	
-	log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
-	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
+    if module.State == updatedState {
+   	 return false, nil
+    }
+    
+    log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag")
+    if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
 		log.WithFields(log.Fields{"id": module.id}).Debug("Existed update flag")
-		return false, nil
-	}
-	
-	module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
-	log.WithFields(log.Fields{"id": module.id}).Debug("Done updating")
-	if err := module.setState(updatedState); err != nil {
-		return false, err
-	}
+		return false, aoserrors.New("On updating process...")
+    }
+    
+    module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
+    log.WithFields(log.Fields{"id": module.id}).Debug("Done updating")
+    if err := module.setState(updatedState); err != nil {
+   	 return false, err
+    }
 
-	return true, nil
+    return true, nil
 }
 
 // Revert reverts update.
 func (module *RenesasUpdateModule) Revert() (rebootRequired bool, err error) {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Revert renesasupdate module")
+    log.WithFields(log.Fields{"id": module.id}).Debug("Revert renesasupdate module")
 
-	if module.State == idleState {
-		return false, nil
-	}
+    if module.State == idleState {
+   	 return false, nil
+    }
 
-	if module.State == updatedState {
-		module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
-	}
+    if module.State == updatedState {
+   	 module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
+    }
 
-	if err := module.setState(idleState); err != nil {
-		return false, err
-	}
+    if err := module.setState(idleState); err != nil {
+   	 return false, err
+    }
 
-	return rebootRequired, nil
+    return rebootRequired, nil
 }
 
 // Apply applies update.
 func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Apply renesas update module")
-	
-	if module.State == idleState {
-		return false, nil
-	}
-	
-	if err := module.setState(idleState); err != nil {
-		return false, err
-	}
+    log.WithFields(log.Fields{"id": module.id}).Debug("Apply renesas update module")
+    
+    if module.State == idleState {
+   	 return false, nil
+    }
+    
+    if err := module.setState(idleState); err != nil {
+   	 return false, err
+    }
 
-	return true, nil
+    return true, nil
 }
 
 // Reboot performs module reboot.
-func (module *RenesasUpdateModule) Reboot() error {
-	if module.rebooter != nil {
-		log.WithFields(log.Fields{"id": module.id}).Debug("Reboot renesas update module")
+func (module *RenesasUpdateModule) Reboot() (err error) {
+    if module.rebooter != nil {
+   	 log.WithFields(log.Fields{"id": module.id}).Debug("Reboot renesas update module")
 
-		if err = module.rebooter.Reboot(); err != nil {
-			return aoserrors.Wrap(err)
-		}
-	}
+   	 if err = module.rebooter.Reboot(); err != nil {
+   		 return aoserrors.Wrap(err)
+   	 }
+    }
 
-	return nil
+    return nil
 }
 
 func (state updateState) String() string {
-	return []string{"idle", "prepared", "updated"}[state]
+    return []string{"idle", "prepared", "updated"}[state]
 }
 
 /***********************************************************************************************************************
@@ -249,18 +250,18 @@ func (state updateState) String() string {
  **********************************************************************************************************************/
 
 func (module *RenesasUpdateModule) setState(state updateState) error {
-	log.WithFields(log.Fields{"id": module.id, "state": state}).Debugf("State changed")
+    log.WithFields(log.Fields{"id": module.id, "state": state}).Debugf("State changed")
 
-	module.State = state
+    module.State = state
 
-	data, err := json.Marshal(module)
-	if err != nil {
-		return aoserrors.Wrap(err)
-	}
+    data, err := json.Marshal(module)
+    if err != nil {
+   	 return aoserrors.Wrap(err)
+    }
 
-	if err = module.storage.SetModuleState(module.id, data); err != nil {
-		return aoserrors.Wrap(err)
-	}
+    if err = module.storage.SetModuleState(module.id, data); err != nil {
+   	 return aoserrors.Wrap(err)
+    }
 
-	return nil
+    return nil
 }
