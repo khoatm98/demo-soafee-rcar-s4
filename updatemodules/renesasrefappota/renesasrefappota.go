@@ -52,6 +52,8 @@ type RenesasUpdateModule struct {
 	State          updateState `json:"state"`
 	VendorVersion  string      `json:"vendorVersion"`
 	PendingVersion string      `json:"pendingVersion"`
+	rebooter       Rebooter
+	checker        UpdateChecker
 }
 
 type moduleConfig struct {
@@ -68,12 +70,14 @@ type updateState int
  **********************************************************************************************************************/
 
 // New creates fs update module instance.
-func New(id string, config json.RawMessage, storage updatehandler.ModuleStorage) (updatehandler.UpdateModule, error) {
+func New(id string, config json.RawMessage, storage updatehandler.ModuleStorage, rebooter Rebooter,
+	checker UpdateChecker) (updatehandler.UpdateModule, error) {
 	log.WithField("module", id).Debug("Create renesasupdate module")
 
 	module := &RenesasUpdateModule{
 		id:      id,
 		storage: storage,
+		rebooter: rebooter, checker: checker,
 		config: moduleConfig{
 			Timeout: aostypes.Duration{Duration: otaDefaultTimeout},
 		},
@@ -225,9 +229,15 @@ func (module *RenesasUpdateModule) Apply() (rebootRequired bool, err error) {
 
 // Reboot performs module reboot.
 func (module *RenesasUpdateModule) Reboot() error {
-	log.WithFields(log.Fields{"id": module.id}).Debug("Reboot renesas update module")
+	if module.rebooter != nil {
+		log.WithFields(log.Fields{"id": module.id}).Debug("Reboot renesas update module")
 
-	return aoserrors.New("not supported")
+		if err = module.rebooter.Reboot(); err != nil {
+			return aoserrors.Wrap(err)
+		}
+	}
+
+	return nil
 }
 
 func (state updateState) String() string {
