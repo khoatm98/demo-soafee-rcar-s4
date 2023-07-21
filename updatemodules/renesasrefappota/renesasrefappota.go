@@ -106,8 +106,6 @@ func New(id string, config json.RawMessage, storage updatehandler.ModuleStorage,
    		 return nil, aoserrors.Wrap(err)
    	 }
     }
-	module.VendorVersion = "0.0.1"
-	module.PendingVersion = "0.0.1"
     return module, nil
 }
 
@@ -191,7 +189,7 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
     }
     
     log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag ...")
-	if _, err := os.Stat("updateFlag"); os.IsNotExist(err) {
+	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
 		log.WithFields(log.Fields{"id": module.id}).Debug("On updating process...")
 	}
 
@@ -201,7 +199,7 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
 			break
 		}
 	}
-	
+
     module.VendorVersion, module.PendingVersion = module.PendingVersion, module.VendorVersion
     log.WithFields(log.Fields{"id": module.id}).Debug("Done updating")
     if err := module.setState(updatedState); err != nil {
