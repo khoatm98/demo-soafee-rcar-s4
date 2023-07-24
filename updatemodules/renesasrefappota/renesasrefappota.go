@@ -56,8 +56,6 @@ type RenesasUpdateModule struct {
 }
 
 type moduleConfig struct {
-    SendQueueName	string        	`json:"sendQueueName"`
-    ReceiveQueueName string        	`json:"receiveQueueName"`
     TargetFile   	string        	`json:"targetFile"`
     Timeout      	aostypes.Duration `json:"timeout"`
 }
@@ -160,7 +158,7 @@ func (module *RenesasUpdateModule) Prepare(imagePath string, vendorVersion strin
     module.PendingVersion = vendorVersion
     //Create flag for updating request
     log.WithFields(log.Fields{"id": module.id}).Debug("Make dowload done flag")
-    if err := os.MkdirAll("downloadedFlag", 0o700); err != nil {
+    if err := os.MkdirAll("/var/aos/status/"+module.id+"/downloadedFlag", 0o700); err != nil {
    	 return aoserrors.Wrap(err)
     }
     if err := module.setState(preparedState); err != nil {
@@ -169,9 +167,9 @@ func (module *RenesasUpdateModule) Prepare(imagePath string, vendorVersion strin
 	log.WithFields(log.Fields{"id": module.id}).Debug("Waiting for updates ...")
 	for {
 		// condition to terminate the loop
-		if _, err := os.Stat("downloadedFlag"); os.IsNotExist(err) {
+		if _, err := os.Stat("/var/aos/status/"+module.id+"/downloadedFlag"); os.IsNotExist(err) {
 			log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
-			if err := os.MkdirAll("updateFlag", 0o700); err != nil {
+			if err := os.MkdirAll("/var/aos/status/"+module.id+"/updateFlag", 0o700); err != nil {
 				return aoserrors.Wrap(err)
 			}
 			break
@@ -189,13 +187,13 @@ func (module *RenesasUpdateModule) Update() (rebootRequired bool, err error) {
     }
     
     log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag ...")
-	if _, err := os.Stat("updateFlag"); !os.IsNotExist(err) {
+	if _, err := os.Stat("/var/aos/status/"+module.id+"/updateFlag"); !os.IsNotExist(err) {
 		log.WithFields(log.Fields{"id": module.id}).Debug("On updating process...")
 	}
 
 	for {
 		// condition to terminate the loop
-		if _, err := os.Stat("updateFlag"); os.IsNotExist(err) {
+		if _, err := os.Stat("/var/aos/status/"+module.id+"/updateFlag"); os.IsNotExist(err) {
 			break
 		}
 	}
