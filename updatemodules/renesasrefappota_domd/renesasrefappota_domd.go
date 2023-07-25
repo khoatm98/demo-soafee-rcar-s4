@@ -227,8 +227,24 @@ func (module *OverlayModule) Prepare(imagePath string, vendorVersion string, ann
 		return aoserrors.Wrap(err)
 	}
 
+	//Create flag for updating request
+    log.WithFields(log.Fields{"id": module.id}).Debug("Make dowload done flag")
+    if err := os.MkdirAll("/var/aos/status/"+module.id+"/downloadedFlag", 0o700); err != nil {
+   	 return aoserrors.Wrap(err)
+    }
 	if err = module.saveState(); err != nil {
 		return aoserrors.Wrap(err)
+	}
+	log.WithFields(log.Fields{"id": module.id}).Debug("Waiting for updates ...")
+	for {
+		// condition to terminate the loop
+		if _, err := os.Stat("/var/aos/status/"+module.id+"/downloadedFlag"); os.IsNotExist(err) {
+			log.WithFields(log.Fields{"id": module.id}).Debug("Make update flag")
+			if err := os.MkdirAll("/var/aos/status/"+module.id+"/updateFlag", 0o700); err != nil {
+				return aoserrors.Wrap(err)
+			}
+			break
+		}
 	}
 
 	return nil
@@ -261,6 +277,18 @@ func (module *OverlayModule) Update() (rebootRequired bool, err error) {
 	if err = ioutil.WriteFile(path.Join(module.updateDir, doUpdateFileName),
 		[]byte(module.state.UpdateType), 0o600); err != nil {
 		return false, aoserrors.Wrap(err)
+	}
+
+	log.WithFields(log.Fields{"id": module.id}).Debug("Check update flag ...")
+	if _, err := os.Stat("/var/aos/status/"+module.id+"/updateFlag"); !os.IsNotExist(err) {
+		log.WithFields(log.Fields{"id": module.id}).Debug("On updating process...")
+	}
+
+	for {
+		// condition to terminate the loop
+		if _, err := os.Stat("/var/aos/status/"+module.id+"/updateFlag"); os.IsNotExist(err) {
+			break
+		}
 	}
 
 	module.state.UpdateState = updatedState

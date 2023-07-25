@@ -85,11 +85,7 @@ func New(id string, config json.RawMessage, storage updatehandler.ModuleStorage,
     if err := json.Unmarshal(config, &module.config); err != nil {
    	 return nil, aoserrors.Wrap(err)
     }
-
-    if module.config.ReceiveQueueName == "" || module.config.SendQueueName == "" {
-   	 return nil, aoserrors.New("receive and send message queue should be configured")
-    }
-
+	
     if module.config.TargetFile == "" {
    	 return nil, aoserrors.New("target file name should be configured")
     }
