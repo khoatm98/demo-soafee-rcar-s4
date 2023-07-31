@@ -26,7 +26,7 @@ type moduleConfig struct {
  ******************************************************************************/
 
 func init() {
-	updatehandler.RegisterPlugin("overlayxenstore",
+	updatehandler.RegisterPlugin("renesasrefappota_domd",
 		func(id string, configJSON json.RawMessage,
 			storage updatehandler.ModuleStorage,
 		) (module updatehandler.UpdateModule, err error) {
